@@ -1,25 +1,23 @@
 from pathlib import Path
 from time import sleep
 import time
-from random import shuffle
-from glob import glob
-from glob import iglob
+from array import *
 import os
 import csv
 from omxplayer.player import OMXPlayer
 import logging
 logging.basicConfig(level=logging.INFO)
-from pythonosc.udp_client import SimpleUDPClient
-from array import *
+from pythonosc import udp_client
+import argparse
 
 #global
 step = 0
-now = 2
+now = 0
 play = False
-destPort = array('i')
-destIp = "localhost"
+destPort = 0
+portIn = 8000
+destIp = array('i')
 stepVideo = array('l')
-
 
 
 #Read the config.txt
@@ -30,9 +28,10 @@ videoPth=conf[2]
 
 #Read the video folder
 def readFolder(videoPth):
-   videos = [file_path for _, _, file_path in os.walk(videoPth)]
-   for file_name in videos[0]:
-      print(file_name)
+   print(videoPth)
+   videos = os.listdir(videoPth.rstrip())
+   mp4_files = [_ for _ in videos if _[-4:] == ".mp4"]
+   print(mp4_files)
 
 #Read the timeline csv
 def readTimeline(pthCsv):
@@ -43,9 +42,9 @@ def readTimeline(pthCsv):
        count = 0
        for row in timeline:
           #print(row)
-          destPort.insert(count,int(row[1]))
+          destIp.insert(count,int(row[1]))
           stepVideo.insert(count,int(row[2]))
-          count =+ 1
+          count=count+1
 
 #Start time
 def config(mode):
@@ -57,6 +56,23 @@ def config(mode):
    else: 
       step = 0
       print("Slave mode")
+
+#Send Osc
+def sendOsc(destIp,destPort,now):
+
+   finalIp = "192.168.200."+str(destIp)
+   print("Ip de destino>> "+str(finalIp))
+   print("Puerto de destino>> "+str(destPort))
+   print("Play video en destino>> "+str(now))
+
+   client = udp_client.SimpleUDPClient(finalIp,destPort)
+   
+   client.send_message("/stepTo",now)
+   time.sleep(1)
+   
+#Receive Osc
+def recOsc():
+     print("Msg")
       
 #Display videos
 def playVideos():
@@ -69,8 +85,9 @@ def playVideos():
 readFolder(videoPth)
 readTimeline(csvPth)
 config(int(mode))
+#sendOsc(destIp[0],destPort,now)
 
-print(destPort);
+print(destIp);
 print(stepVideo);
 
 
