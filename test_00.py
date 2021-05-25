@@ -13,6 +13,7 @@ import math
 import threading
 from pythonosc import dispatcher
 from pythonosc import osc_server
+from typing import List, Any
 
 #global
 step = 0
@@ -22,7 +23,17 @@ destPort = 0
 portIn = 8000
 destIp = array('i')
 stepVideo = array('l')
+videoNow = " "
+vidNow = 0
+playing = 0
 
+
+
+#Get Values from OSC
+def getOsc(adress, *args):
+     vidNow = int(args[0])
+     print ("Recibe para play ahora >> "+str(vidNow))
+     playVideos(vidNow)
      
 #Prevencion de errores si no hay puertos de destino
 def handle_error(self, request, client_address):
@@ -50,9 +61,12 @@ def print_xy_fader_handler(unused_addr, args, value1, value2):
 
 #Listen OSC
 if __name__ == "__main__":
+    
+ 
      dispatcher = dispatcher.Dispatcher()
-     dispatcher.map("/stepTo", print)
-     
+     dispatcher.map("/stepTo", getOsc)
+        
+    
 
 def listenOsc(ip, port):
     print("Starting Server")
@@ -88,6 +102,9 @@ def readTimeline(pthCsv):
           destIp.insert(count,int(row[1]))
           stepVideo.insert(count,int(row[2]))
           count=count+1
+    
+   print(destIp)
+   print(stepVideo)
 
 #Start time
 def config(mode):
@@ -101,39 +118,59 @@ def config(mode):
       print("Slave mode")
 
 #Send Osc
-def sendOsc(destIp,destPort,now):
+def sendOsc(dIp,dP,now):
 
-   print("Ip de destino>> "+str(destIp))
-   print("Puerto de destino>> "+str(destPort))
-   print("Play video en destino>> "+str(now))
+   print("Ip de destino >> "+str(dIp))
+   print("Puerto de destino >> "+str(dP))
+   print("Play video en destino >> "+str(now))
 
-   client = udp_client.SimpleUDPClient(destIp,destPort)
+   client = udp_client.SimpleUDPClient(dIp,dP)
    client.print_tracebacks = True
    
    client.send_message("/stepTo",now)
    time.sleep(1)
-   
-
-#Display videos
-def playVideos(videoNow):
-     #sleep(5)
-     player = OMXPlayer(videoNow)
-     player.play()
-     player.quit()
-
-
+ 
+ #Play videos
+def playVideos(vN):
+    
+     global playing
+     
+    
+     print ("Dentro funcion video >> " + str(vN))
+     vid = "/home/pi/Desktop/videocoto/videos/"+str(vN)+".mp4"
+     print("Toca reproducir ahora: "+vid)
+     
+     if playing == 0:
+         print("Not Playing: "+str(playing))
+         VIDEO_PATH = Path(vid)
+         player = OMXPlayer(VIDEO_PATH)
+         player.seek(0)  
+         player.play()    
+         sleep(2)
+         playing = 1
+     
+     elif playing == 1 :
+        print("Is Playing: "+str(playing))
+        VIDEO_PATH = Path(vid)
+        player1 = OMXPlayer(VIDEO_PATH)
+        player1.seek(0)  
+        player1.play()    
+        sleep(2)
+        playing = 1
+     
+     
 config(int(mode))
 readFolder(videoPth)
 readTimeline(csvPth)
 listenOsc("127.0.0.1",8000)
 
 
-print(destIp);
-print(stepVideo);
-sendOsc("127.0.0.1",8000,now)
+sleep(5)
+sendOsc("127.0.0.1",8000,stepVideo[2])
+sleep(5)
+sendOsc("127.0.0.1",8000,stepVideo[0])
 
-
-    
+  
 
 
 
