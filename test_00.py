@@ -150,13 +150,15 @@ def playVideos(vN):
          playing = 1
      
      elif playing == 1 :
-        print("Is Playing: "+str(playing))
+        print("Is Playing: "+str(playing))  # hay que revisar esto
         VIDEO_PATH = Path(vid)
         player1 = OMXPlayer(VIDEO_PATH)
         player1.seek(0)  
         player1.play()    
         sleep(2)
         playing = 1
+        
+
      
      
 config(int(mode))
