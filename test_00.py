@@ -8,12 +8,10 @@ from omxplayer.player import OMXPlayer
 import logging
 logging.basicConfig(level=logging.INFO)
 from pythonosc import udp_client
-import argparse
-import math
 import threading
 from pythonosc import dispatcher
 from pythonosc import osc_server
-from typing import List, Any
+
 
 #global
 step = 0
@@ -26,11 +24,16 @@ stepVideo = array('l')
 videoNow = " "
 vidNow = 0
 playing = 0
+omx_arg = ['--timeout', '1000', '--live', '--blank', '--refresh', '--no-keys']	
+bus = ["org.mpris.MediaPlayer2.omxplayer1" ,"org.mpris.MediaPlayer2.omxplayer2",]
 
+player = OMXPlayer("/home/pi/Desktop/videocoto/videos/0.mp4", args=omx_arg, dbus_name = bus[0])
+player1 = OMXPlayer("/home/pi/Desktop/videocoto/videos/1.mp4", args=omx_arg, dbus_name = bus[1])
 
 
 #Get Values from OSC
 def getOsc(adress, *args):
+    
      vidNow = int(args[0])
      print ("Recibe para play ahora >> "+str(vidNow))
      playVideos(vidNow)
@@ -112,7 +115,8 @@ def config(mode):
    if mode >= 1:
       step = 0
       print("Master mode")
-      
+      playVideos(0)
+ 
    else: 
       step = 0
       print("Slave mode")
@@ -129,37 +133,61 @@ def sendOsc(dIp,dP,now):
    
    client.send_message("/stepTo",now)
    time.sleep(1)
- 
+   
+
  #Play videos
 def playVideos(vN):
-    
-     global playing
      
+     global playing
+     global player
+     global player1
     
      print ("Dentro funcion video >> " + str(vN))
      vid = "/home/pi/Desktop/videocoto/videos/"+str(vN)+".mp4"
      print("Toca reproducir ahora: "+vid)
-     
+      
      if playing == 0:
          print("Not Playing: "+str(playing))
+    
+         
          VIDEO_PATH = Path(vid)
-         player = OMXPlayer(VIDEO_PATH)
+         player = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[0])
          player.seek(0)  
          player.play()    
          sleep(2)
+         
+         player1.stop()
+         player1.quit()
+         
          playing = 1
+         
      
      elif playing == 1 :
-        print("Is Playing: "+str(playing))  # hay que revisar esto
+        print("Is Playing: "+str(playing))
+
+         
         VIDEO_PATH = Path(vid)
-        player1 = OMXPlayer(VIDEO_PATH)
+        player1 = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[1])
         player1.seek(0)  
         player1.play()    
         sleep(2)
-        playing = 1
-        
 
-     
+        player.stop()
+        player.quit()
+        
+        playing = 0
+
+    
+        
+#Previene de falsos apagados
+def patch_OMXPLayer_quit():
+    old_quit = OMXPlayer.quit
+    def new_quit(self):
+        self._connection._bus.close()
+        old_quit(self)
+    OMXPlayer.quit = new_quit
+patch_OMXPLayer_quit()
+
      
 config(int(mode))
 readFolder(videoPth)
@@ -171,8 +199,12 @@ sleep(5)
 sendOsc("127.0.0.1",8000,stepVideo[2])
 sleep(5)
 sendOsc("127.0.0.1",8000,stepVideo[0])
+sleep(5)
+sendOsc("127.0.0.1",8000,stepVideo[1])
 
   
+
+
 
 
 
