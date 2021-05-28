@@ -26,7 +26,9 @@ videoNow = " "
 vidNow = 0
 playing = 0
 totalSteps = 0
-omx_arg = ['--no-osd', '--no-keys', '-b']
+slave = 0
+omx_arg = ['--no-osd', '-b','--loop']
+omx_arg_pasive = ['--no-osd','-b']
 #omx_arg = ['--timeout', '2000', '--live', '--blank', '--refresh', '--no-keys']	
 bus = ["org.mpris.MediaPlayer2.omxplayer1" ,"org.mpris.MediaPlayer2.omxplayer2",]
 
@@ -97,6 +99,10 @@ def readFolder(videoPth):
    videos = os.listdir(videoPth.rstrip())
    mp4_files = [_ for _ in videos if _[-4:] == ".mp4"]
    print(mp4_files)
+   
+   if slave == True:
+       totalSteps = len(mp4_files)
+       print("Numero de vídeos en la carpeta: " + str(totalSteps))
 
 #Read the timeline csv
 def readTimeline(pthCsv):
@@ -124,18 +130,22 @@ def readTimeline(pthCsv):
 def config(mode):
    
    global start
+   global slave
    
    if start == False:
-       if mode >= 1:
+       if mode == 1:
           print("Master mode")
-          
+          slave = False
           readFolder(videoPth)
           readTimeline(csvPth)
           listenOsc("127.0.0.1",8000)
           start=True
      
-       else: 
+       elif mode == 0: 
           print("Slave mode")
+          slave = True
+          readFolder(videoPth)
+          listenOsc("127.0.0.1",8000)
           start=True
 
 #Send Osc
@@ -168,7 +178,12 @@ def playVideos(vN):
          print("Not Playing: "+str(playing))
          
          VIDEO_PATH = Path(vid)
-         player = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[0])
+         if slave == True:
+              player = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[0])
+         
+         if slave == False:
+              player = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[0]) 
+         
          player.seek(0)  
          player.play()
          
@@ -183,7 +198,12 @@ def playVideos(vN):
         print("Is Playing: "+str(playing))
         
         VIDEO_PATH = Path(vid)
-        player1 = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[1])
+        if slave == True:
+              player1 = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[1])
+         
+        if slave == False:
+              player1 = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[1]) 
+         
         player1.seek(0)  
         player1.play()
         
@@ -204,14 +224,25 @@ patch_OMXPLayer_quit()
 def startSec(init, tSteps):
     
     if init == True:
-        for i in range(tSteps):
-           print("Paso ahora > "+str(i)+" de "+str(tSteps))
-           time.sleep(timeVideo[i])
-           sendOsc("127.0.0.1",8000,stepVideo[i])
+        
+        i = 0
+        while i <= tSteps:
+           i = i+1
+           print("Paso ahora > "+str(i-1)+" de "+str(tSteps))
+           time.sleep(timeVideo[i-1])
+           sendOsc("127.0.0.1",8000,stepVideo[i-1])
+           
+           if i == tSteps:
+               print("start again")
+               i = 0
+           
               
               
 config(int(mode))
-startSec(start, totalSteps)
+
+#Se activa si hay Master
+if slave == False:
+    startSec(start, totalSteps)
 
 
 
