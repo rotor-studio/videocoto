@@ -1,3 +1,7 @@
 1
 /home/pi/Desktop/videocoto/timeline.csv
 /home/pi/Desktop/videocoto/videos/
+192.168.200.103
+8000
+8000 
+

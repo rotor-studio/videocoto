@@ -17,8 +17,9 @@ from pythonosc import osc_server
 step = 0
 now = 0
 play = False
-destPort = 0
+destPort = 8000
 portIn = 8000
+listenIp = "127.0.0.1"
 destIp = array('i')
 stepVideo = array('l')
 timeVideo = array('l')
@@ -80,8 +81,7 @@ if __name__ == "__main__":
 
 def listenOsc(ip, port):
     print("Starting Server")
-    server = osc_server.ThreadingOSCUDPServer(
-        (ip, port), dispatcher)
+    server = osc_server.ThreadingOSCUDPServer((ip, port), dispatcher)
     print("Serving on {}".format(server.server_address))
     thread = threading.Thread(target=server.serve_forever)
     thread.start()
@@ -92,6 +92,10 @@ conf = list(open("config.txt", "r"))
 mode=conf[0]
 csvPth=conf[1]
 videoPth=conf[2]
+listenIp = conf[3]
+portIn = conf[4]
+destPort = conf[5]
+
 
 #Read the video folder
 def readFolder(videoPth):
@@ -138,14 +142,14 @@ def config(mode):
           slave = False
           readFolder(videoPth)
           readTimeline(csvPth)
-          listenOsc("127.0.0.1",8000)
+          listenOsc("192.168.200.103",8000)
           start=True
      
        elif mode == 0: 
           print("Slave mode")
           slave = True
           readFolder(videoPth)
-          listenOsc("127.0.0.1",8000)
+          listenOsc("192.168.200.103",8000)
           start=True
 
 #Send Osc
@@ -178,10 +182,10 @@ def playVideos(vN):
          print("Not Playing: "+str(playing))
          
          VIDEO_PATH = Path(vid)
-         if slave == True:
+         if slave == False:
               player = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[0])
          
-         if slave == False:
+         if slave == True:
               player = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[0]) 
          
          player.seek(0)  
@@ -198,12 +202,12 @@ def playVideos(vN):
         print("Is Playing: "+str(playing))
         
         VIDEO_PATH = Path(vid)
-        if slave == True:
+        if slave == False :
               player1 = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[1])
          
-        if slave == False:
+        if slave == True:
               player1 = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[1]) 
-         
+        
         player1.seek(0)  
         player1.play()
         
@@ -230,7 +234,8 @@ def startSec(init, tSteps):
            i = i+1
            print("Paso ahora > "+str(i-1)+" de "+str(tSteps))
            time.sleep(timeVideo[i-1])
-           sendOsc("127.0.0.1",8000,stepVideo[i-1])
+           sendOsc("192.168.200."+str(destIp[i-1]),int(destPort),stepVideo[i-1])
+
            
            if i == tSteps:
                print("start again")
