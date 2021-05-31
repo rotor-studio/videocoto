@@ -28,8 +28,8 @@ vidNow = 0
 playing = 0
 totalSteps = 0
 slave = 0
-omx_arg = ['--no-osd', '-b','--loop']
-omx_arg_pasive = ['--no-osd','-b']
+omx_arg = ['--no-osd', '-b','--loop','--aspect-mode',"fill"]
+omx_arg_pasive = ['--no-osd','-b','--aspect-mode',"fill"]
 #omx_arg = ['--timeout', '2000', '--live', '--blank', '--refresh', '--no-keys']	
 bus = ["org.mpris.MediaPlayer2.omxplayer1" ,"org.mpris.MediaPlayer2.omxplayer2",]
 
@@ -142,14 +142,14 @@ def config(mode):
           slave = False
           readFolder(videoPth)
           readTimeline(csvPth)
-          listenOsc("192.168.200.103",8000)
+          listenOsc("192.168.0.103",8000)
           start=True
      
        elif mode == 0: 
           print("Slave mode")
           slave = True
           readFolder(videoPth)
-          listenOsc("192.168.200.103",8000)
+          listenOsc("192.168.0.103",8000)
           start=True
 
 #Send Osc
@@ -184,12 +184,16 @@ def playVideos(vN):
          VIDEO_PATH = Path(vid)
          if slave == False:
               player = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[0])
+              player.set_aspect_mode("stretch")
          
          if slave == True:
-              player = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[0]) 
+              player = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[0])
+              player.set_aspect_mode("stretch")
+         
          
          player.seek(0)  
          player.play()
+         
          
          if first == 1:
             player1.stop()
@@ -204,12 +208,15 @@ def playVideos(vN):
         VIDEO_PATH = Path(vid)
         if slave == False :
               player1 = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[1])
+              player1.set_aspect_mode("fill")
          
         if slave == True:
-              player1 = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[1]) 
-        
+              player1 = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[1])
+              player1.set_aspect_mode("fill")
+              
         player1.seek(0)  
         player1.play()
+        
         
         player.stop()
         playing = 0
@@ -234,7 +241,7 @@ def startSec(init, tSteps):
            i = i+1
            print("Paso ahora > "+str(i-1)+" de "+str(tSteps))
            time.sleep(timeVideo[i-1])
-           sendOsc("192.168.200."+str(destIp[i-1]),int(destPort),stepVideo[i-1])
+           sendOsc("192.168.0."+str(destIp[i-1]),int(destPort),stepVideo[i-1])
 
            
            if i == tSteps:
