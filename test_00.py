@@ -28,8 +28,8 @@ vidNow = 0
 playing = 0
 totalSteps = 0
 slave = 0
-omx_arg = ['--no-osd', '-b','--loop','--aspect-mode',"fill"]
-omx_arg_pasive = ['--no-osd','-b','--aspect-mode',"fill"]
+omx_arg = ['--no-osd', '-b','--loop']
+omx_arg_pasive = ['--no-osd','-b']
 #omx_arg = ['--timeout', '2000', '--live', '--blank', '--refresh', '--no-keys']	
 bus = ["org.mpris.MediaPlayer2.omxplayer1" ,"org.mpris.MediaPlayer2.omxplayer2",]
 
@@ -184,11 +184,11 @@ def playVideos(vN):
          VIDEO_PATH = Path(vid)
          if slave == False:
               player = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[0])
-              player.set_aspect_mode("stretch")
+              
          
          if slave == True:
               player = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[0])
-              player.set_aspect_mode("stretch")
+              
          
          
          player.seek(0)  
@@ -208,11 +208,11 @@ def playVideos(vN):
         VIDEO_PATH = Path(vid)
         if slave == False :
               player1 = OMXPlayer(VIDEO_PATH, args=omx_arg, dbus_name = bus[1])
-              player1.set_aspect_mode("fill")
+              
          
         if slave == True:
               player1 = OMXPlayer(VIDEO_PATH, args=omx_arg_pasive, dbus_name = bus[1])
-              player1.set_aspect_mode("fill")
+              
               
         player1.seek(0)  
         player1.play()
